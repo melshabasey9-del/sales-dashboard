@@ -359,7 +359,7 @@ const EXTRA=(()=>{const o={};
  const cck=fk(CM,/^channel[\s_\-]*b$/i)||fk(CM,/classif|تصنيف|segment/i)||fk(CM,/^class/i),dmap={};
  if(T.cls&&T.cls.length){const KM=km(T.cls),keys=Object.keys(KM),kk=keys.find(k=>/^(id|key|code)|(\s|_)(id|key|code)$|رقم|كود/i.test(k))||keys[0],nn=keys.find(k=>k!==kk&&/name|desc|classif|اسم|تصنيف|type/i.test(k))||keys.find(k=>k!==kk)||kk;T.cls.forEach(r=>{dmap[S(r[KM[kk]])]=S(r[KM[nn]])})}
  const latK=fk(CM,/^(lat|latitude)\b|خط\s*العرض/i),lngK=fk(CM,/^(lon|lng|long|longitude)\b|خط\s*الطول/i),gpsK=fk(CM,/gps|location|coord|موقع|إحداث|احداث/i),dayK=fk(CM,/day|يوم/i),telK=fk(CM,/phone|mobile|tel|جوال|هاتف/i),adK=fk(CM,/address|عنوان/i);
- const parseGps=r=>{let la=latK?parseFloat(r[CM[latK]]):NaN,lo=lngK?parseFloat(r[CM[lngK]]):NaN;if((isNaN(la)||isNaN(lo))&&gpsK){const m=String(r[CM[gpsK]]==null?'':r[CM[gpsK]]).match(/(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)/);if(m){la=+m[1];lo=+m[2]}}if(isNaN(la)||isNaN(lo)||(!la&&!lo))return null;if(Math.abs(la)>90&&Math.abs(lo)<=90){const t=la;la=lo;lo=t}return[+la.toFixed(6),+lo.toFixed(6)]};
+ const parseGps=r=>{const pf=v=>parseFloat(String(v==null?'':v).replace(',','.'));let la=latK?pf(r[CM[latK]]):NaN,lo=lngK?pf(r[CM[lngK]]):NaN;if((isNaN(la)||isNaN(lo))&&gpsK){const m=String(r[CM[gpsK]]==null?'':r[CM[gpsK]]).match(/(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)/);if(m){la=+m[1];lo=+m[2]}}if(isNaN(la)||isNaN(lo)||(!la&&!lo))return null;if(Math.abs(la)>90&&Math.abs(lo)<=90){const t=la;la=lo;lo=t}return[+la.toFixed(6),+lo.toFixed(6)]};
  const dim=new Map();T.cust.forEach(r=>{const id=S(r[CM.Customer]);if(!id)return;let v=cck?S(r[CM[cck]]):'';if(v&&dmap[v])v=dmap[v];dim.set(id,{ca:S(r[CM['Channel A']]),day:dayK&&!/date/i.test(dayK)?S(r[CM[dayK]]):'',tel:telK?S(r[CM[telK]]):'',ad:adK?S(r[CM[adK]]):'',gp:parseGps(r),c:id,n:S(r[CM['Customer Name']]),ar:S(r[CM['Arabic name']]),r:S(r[CM.Route]),st:S(r[CM.State]).toLowerCase()==='active'?1:0,cls:v||'غير مصنف',cur:0,prev:0,l3:0,last:'',rs:{}})});
  const M6=new Set(ms.slice(-6)),d120=new Date(new Date(dmax+'T12:00:00')-120*864e5).toISOString().slice(0,10),cpr=new Map(),cprAdd=(x,p)=>{let e=cpr.get(x.c);if(!e){e={r:x.r,m:{},cat:{},sku:{},dt:new Set(),last:''};cpr.set(x.c,e)}const ym=x.d.slice(0,7);e.m[ym]=(e.m[ym]||0)+x.v;if(x.d>e.last){e.last=x.d;e.r=x.r}if(p&&/pallet/i.test(p.name+' '+p.cat))return;if(M6.has(ym)){const ct=p&&p.cat?p.cat:'غير مربوط',o=e.cat[ym]||(e.cat[ym]={});o[ct]=(o[ct]||0)+x.v}if(l3.has(ym)){const s=e.sku[x.p]||(e.sku[x.p]=[0,0,0,'']);s[0]+=x.v;if(ym===sel)s[1]+=x.v;s[2]+=x.q;if(x.d>s[3])s[3]=x.d}if(x.d>=d120)e.dt.add(x.d)},clsDM=new Map(),clsM={},catM={},csM={},yc=new Map(),add=(M,ym,k,v)=>{const e=M[ym]||(M[ym]={});e[k]=(e[k]||0)+v};
  sa.forEach(x=>{const ym=x.d.slice(0,7),d=dim.get(x.c),p=pmap.get(x.p);add(clsM,ym,d?d.cls:'غير مصنف',x.v);{const k3=x.d+'|'+x.r+'|'+(d?d.cls:'غير مصنف');clsDM.set(k3,(clsDM.get(k3)||0)+x.v)}cprAdd(x,p);add(catM,ym,p&&p.cat?p.cat:'غير مربوط',x.v);add(csM,ym,p&&(p.cs||p.cat)?(p.cs||p.cat):'غير مربوط',x.v);
@@ -1420,6 +1420,30 @@ window.openCust360=openCust;
 const hashGo=()=>{const m=location.hash.match(/^#c=(.+)$/);if(m&&D.custPro)openCust(decodeURIComponent(m[1]))};window.addEventListener('hashchange',hashGo);setTimeout(hashGo,1500);
 /* installable app (PWA) */
 try{if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(_){}
+})();
+</script>
+<script id="v17">
+/* shared sync outside Claude: Firebase Firestore (free) through firebase-config.js */
+(function(){
+const ld=src=>new Promise((res,rej)=>{const e=document.createElement('script');e.src=src;e.onload=res;e.onerror=rej;document.head.appendChild(e)});
+(async()=>{try{
+  await new Promise(r=>setTimeout(r,1500));
+  if(DBH)return;
+  try{await ld('firebase-config.js')}catch(_){return}
+  const cfg=window.FIREBASE_CONFIG;if(!cfg||!cfg.projectId||/YOUR_/.test(cfg.apiKey||''))return;
+  const V='10.12.2';
+  await ld('https://www.gstatic.com/firebasejs/'+V+'/firebase-app-compat.js');
+  await ld('https://www.gstatic.com/firebasejs/'+V+'/firebase-firestore-compat.js');
+  firebase.initializeApp(cfg);const db=firebase.firestore();
+  try{db.settings({experimentalAutoDetectLongPolling:true})}catch(_){}
+  let us;try{us=await db.collection('users').get()}catch(e){console.error('sync offline',e);toast(L('تعذر الاتصال بقاعدة البيانات المشتركة','Cannot reach the shared database'));return}
+  if(us.empty)USERS().forEach(u=>db.collection('users').doc(u.n).set(u).catch(()=>{}));
+  DBH=db;
+  db.collection('actions').onSnapshot(s=>{if(s.empty&&ACT.length)ACT.forEach(a=>db.collection('actions').doc(a.id).set(a).catch(()=>{}));else ACT=s.docs.map(d=>d.data()).sort((a,b)=>(b.ts||0)-(a.ts||0));renderActions();renderBrief();if(page==='tasks')renderTasks()},()=>{});
+  db.collection('exec').onSnapshot(s=>{EXE={};s.docs.forEach(d=>EXE[d.id]=d.data());renderExecution()},()=>{});
+  const iv=setInterval(async()=>{if(typeof isOwner==='function'&&isOwner()){clearInterval(iv);try{const m=await db.collection('dataset').doc('meta').get();if(!m.exists&&D&&D.monthly)publishData(D)}catch(_){}}},3000);
+  console.log('shared sync: connected');
+}catch(e){console.error('sync init failed',e)}})();
 })();
 </script>
 </body>
